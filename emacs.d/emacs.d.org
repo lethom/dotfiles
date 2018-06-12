@@ -347,19 +347,9 @@ Jokes aside, I use ~nlinum~ because it solves some performance issues I had with
 highlighting in a smart way the white spaces.
 
 #+BEGIN_SRC emacs-lisp
-(use-package nlinum
-  :ensure t
-  :config
-  (progn
-    (global-nlinum-mode t)
-    (add-hook 'nlinum-mode-hook
-              (lambda ()
-                (setq-local nlinum-format "%4d ")
-                )
-              )
-    (setq column-number-mode t)
-    )
-  )
+(global-display-line-numbers-mode t)
+(setq-default display-line-numbers-width 4)
+(setq column-number-mode t)
 #+END_SRC
 
 ** Matching Parentheses
