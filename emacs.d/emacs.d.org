@@ -1,90 +1,107 @@
 * Package Management
 
-  We use [[https://melpa.org][melpa]], an Emacs Lisp Package Archive, to get [[https://github.com/jwiegley/use-package][use-package]] package which
-  provides a macro to isolate package configuration.
+We use [[https://melpa.org][melpa]], an Emacs Lisp Package Archive, to get [[https://github.com/jwiegley/use-package][use-package]] package which
+provides a macro to isolate package configuration.
 
 #+BEGIN_SRC emacs-lisp
   (require 'package)
 
-  (add-to-list 'package-archives
-        '("melpa" . "https://melpa.org/packages/")
-        t
-        )
+  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
   (package-initialize)
 #+END_SRC
 
-  Before going any further, we first make sure we have an up-to-date description
-  of the packages archive available.
+Before going any further, we first make sure we have an up-to-date description
+of the packages archive available.
 
 #+BEGIN_SRC emacs-lisp
-(or (file-exists-p package-user-dir)
-    (package-refresh-contents))
+  (or (file-exists-p package-user-dir)
+      (package-refresh-contents))
 #+END_SRC
 
-  As far as I know, emacs does not have any built-in mechanisms to automatically
-  fetch a list of packages. There are several way to achieve that, one is
-  [[https://github.com/cask/cask][Cask]]. I mention it here because it looks like a pretty good tool, but it is
-  not available in the Archlinux repositories I am using (if you exclude the AUR
-  package). Fortunately, I’ve quickly found out it is easy to define a function
-  which does pretty much what I need:
+As far as I know, emacs does not have any built-in mechanisms to automatically
+fetch a list of packages. There are several way to achieve that, one is [[https://github.com/cask/cask][Cask]]. I
+mention it here because it looks like a pretty good tool, but it is not
+available in the Archlinux repositories I am using (if you exclude the AUR
+package). Fortunately, I’ve quickly found out it is easy to define a function
+which does pretty much what I need:
 
 #+BEGIN_SRC emacs-lisp
-(defun ensure-package-installed (&rest packages)
-  "Assure every PACKAGES is installed, ask for installation if it’s not.
-Return a list of installed packages or nil for every skipped package."
-  (mapcar
-   (lambda (package)
-     (if (package-installed-p package)
-         nil
-       (package-install package))
-       package)
-  packages))
+  (defun ensure-package-installed (&rest packages)
+    "Assure every PACKAGES is installed, ask for installation if it’s not.
+  Return a list of installed packages or nil for every skipped package."
+    (mapcar
+     (lambda (package)
+       (if (package-installed-p package)
+           nil
+         (package-install package))
+         package)
+    packages))
 #+END_SRC
 
-  In the first version of my configuration file, I was using the
-  ~ensure-package~installed~ function to list all the packages I was using. Now,
-  as said before, I use the ~use-package~ macro.
+In the first version of my configuration file, I was using the
+~ensure-package-installed~ function to list all the packages I was using. Now,
+as said before, I use the ~use-package~ macro.
 
 #+BEGIN_SRC emacs-lisp
-(ensure-package-installed 'use-package)
-(ensure-package-installed 'diminish)
+  (ensure-package-installed 'use-package)
+  (ensure-package-installed 'diminish)
 #+END_SRC
 
-  As stated in [[https://github.com/jwiegley/use-package#use-packageel-is-no-longer-needed-at-runtime][the use-package README]], the macro is not required to be available
-  at runtime, so lets require it as they say:
+As stated in [[https://github.com/jwiegley/use-package#use-packageel-is-no-longer-needed-at-runtime][the use-package README]], the macro is not required to be available
+at runtime, so lets require it as they say:
 
 #+BEGIN_SRC emacs-lisp
-(eval-when-compile
-  (require 'use-package))
+  (eval-when-compile
+    (require 'use-package))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(require 'diminish)
+  (require 'diminish)
 #+END_SRC
 
 * Look & Feel
+
+** Theme
+
+#+BEGIN_SRC emacs-lisp
+  ;(use-package nordless-theme
+  ;  :ensure t
+  ;  :config
+  ;  (load-theme 'nordless t)
+  ;  )
+#+END_SRC
+
+I use my homegrown collection of themes, based on ~colorless~. It is not yet on
+Melpa, for no good reason. So instead I have to load it manually.
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path "~/.emacs.d/lisp/")
+  (require 'colorless-themes)
+#+END_SRC
+
+
+For a reason I do not fully understand, ~emacsclient~ does not work very well
+with changing the color of the cursor. I have found a solution on [[https://stackoverflow.com/questions/24222362/][StackOverflow]].
+
+#+BEGIN_SRC emacs-lisp
+  (if (daemonp)
+      (add-hook 'after-make-frame-functions
+          (lambda (frame)
+              (select-frame frame)
+              (load-theme 'seagreenless t)))
+      (load-theme 'seagreenless t))
+#+END_SRC
+
+** Powerline
+
+The default status line on Emacs does the job, but sometimes it is good to just
+be a bit fancy.
 
 #+BEGIN_SRC emacs-lisp
   (use-package powerline
     :ensure t
     :config
-    (powerline-center-evil-theme)
-    )
-#+END_SRC
-
-** Theme
-
-I use my homegrown theme, called ~nordless~ (because it is a color/less/ theme
-inspired by the /nord/ palette color).
-
-#+BEGIN_SRC emacs-lisp
-(use-package nordless-theme
-  :ensure t
-  :config
-  (load-theme 'nordless t)
-  )
-;(add-to-list 'load-path "~/.emacs.d/lisp/")
-;(require 'nordless-theme)
+    (powerline-center-evil-theme))
 #+END_SRC
 
 ** Keyboard Layout
@@ -101,13 +118,13 @@ inspired by the /nord/ palette color).
 (setq mac-option-modifier nil)
 #+END_SRC
 
-  I am a former vim user and I have switch to emacs mostly for [[https://proofgeneral.github.io][Proof
-  General]]. The only reason I ever consider making this move is because I [[https://juanjoalvarez.net/es/detail/2014/sep/19/vim-emacsevil-chaotic-migration-guide/][ran
-  into a blogpost which describes such a migration]] through the [[https://github.com/emacs-evil-evil][evil package]], a
-  way to get the vim bindings and modal functioning into emacs.
+I am a former vim user and I have switch to emacs mostly for [[https://proofgeneral.github.io][Proof General]]. The
+only reason I ever consider making this move is because I [[https://juanjoalvarez.net/es/detail/2014/sep/19/vim-emacsevil-chaotic-migration-guide/][ran into a blogpost
+which describes such a migration]] through the [[https://github.com/emacs-evil-evil][evil package]], a way to get the vim
+bindings and modal functioning into emacs.
 
-  Note that, before loading evil, we need to tell it not to expand abbreviation
-  on insert exit, see [[https://github.com/syl20bnr/spacemaces/issues/8853][this Github issue]] if you want to know why.
+Note that, before loading evil, we need to tell it not to expand abbreviation on
+insert exit, see [[https://github.com/syl20bnr/spacemaces/issues/8853][this Github issue]] if you want to know why.
 
 #+BEGIN_SRC emacs-lisp
 (use-package evil
@@ -119,11 +136,11 @@ inspired by the /nord/ palette color).
     (evil-mode t)
 #+END_SRC
 
-  Now, the think is I am a [[https://bepo.fr][bépo]] happy user. It is quite different from qwerty
-  and therefore I need to rebind a lot of things manually.
+Now, the think is I am a [[https://bepo.fr][bépo]] happy user. It is quite different from qwerty and
+therefore I need to rebind a lot of things manually.
 
-  I use ~l~ rather than ~r~ to replace, because ~r~ is dedicated to moving
-  inside a buffer.
+I use ~l~ rather than ~r~ to replace, because ~r~ is dedicated to moving inside
+a buffer.
 
 #+BEGIN_SRC emacs-lisp
     (define-key evil-normal-state-map "l" 'evil-replace)
@@ -151,8 +168,8 @@ visual mode.
     (define-key evil-visual-state-map "n" 'evil-forward-char)
 #+END_SRC
 
-  Because of this choice, ~n~ (next research result) is already used so I need
-  to find something else. Its neighbor ~m~ is a perfect candidate.
+Because of this choice, ~n~ (next research result) is already used so I need to
+find something else. Its neighbor ~m~ is a perfect candidate.
 
 #+BEGIN_SRC emacs-lisp
     (define-key evil-normal-state-map "m" 'evil-search-next)
@@ -161,10 +178,9 @@ visual mode.
     (define-key evil-visual-state-map "M" 'evil-search-previous)
 #+END_SRC
 
-  I split my buffers a lot, so jumping from one buffer to another should be
-  easy. The thing is, ~w~ is not the most easy letter to hit in bépo (probably
-  because we do not have a lot of words which are using it), so I use ~à~
-  instead.
+I split my buffers a lot, so jumping from one buffer to another should be
+easy. The thing is, ~w~ is not the most easy letter to hit in bépo (probably
+because we do not have a lot of words which are using it), so I use ~à~ instead.
 
 #+BEGIN_SRC emacs-lisp
     (define-key evil-motion-state-map (kbd "à t") 'evil-window-left)
@@ -175,8 +191,8 @@ visual mode.
     (define-key evil-motion-state-map (kbd "à q") 'kill-this-buffer)
 #+END_SRC
 
-  And because I really use this feature often, I decided it shall get its own
-  mappings.
+And because I really use this feature often, I decided it shall get its own
+mappings.
 
 #+BEGIN_SRC emacs-lisp
     (define-key evil-normal-state-map "|" 'split-window-horizontally)
@@ -211,16 +227,14 @@ define the following functions, found [[https://github.com/dpsxp/emacs-setup][on
               (shell-command-on-region (region-beginning) (region-end) "xsel -i -b")
               (message "Yanked region to clipboard!")
               (deactivate-mark))
-          (message "No region active; can't yank to clipboard!")))
-    )
+          (message "No region active; can't yank to clipboard!"))))
 
     (setq x-select-enable-clipboard nil)
     (defun paste-from-clipboard ()
       (interactive)
       (setq x-select-enable-clipboard t)
       (yank)
-      (setq x-select-enable-clipboard nil)
-      )
+      (setq x-select-enable-clipboard nil))
 #+END_SRC
 
 The mapping can be made both in normal and insert mode.
@@ -267,15 +281,13 @@ move inside the directories content.
       "n" 'evil-forward-char
       "m" 'evil-search-next
       "M" 'evil-search-previous)
-        )
-      )
 #+END_SRC
 
 I want to be able to zoom and zoom at.
 
 #+BEGIN_SRC emacs-lisp
       (global-set-key (kbd "C-+") 'text-scale-increase)
-      (global-set-key (kbd "C--") 'text-scale-decrease)
+      (global-set-key (kbd "C--") 'text-scale-decrease)))
 #+END_SRC
 
 Finally, I really wanted to get back the capability to easily increment or
@@ -283,21 +295,19 @@ decrease the next number on the current line. To do that, the [[https://github.c
 package.
 
 #+BEGIN_SRC emacs-lisp
-(use-package evil-numbers
-  :ensure t
-  :config
-  (progn
-    (define-key evil-normal-state-map "+" 'evil-numbers/inc-at-pt)
-    (define-key evil-normal-state-map "-" 'evil-numbers/dec-at-pt)
-    )
-  )
+  (use-package evil-numbers
+    :ensure t
+    :config
+    (progn
+      (define-key evil-normal-state-map "+" 'evil-numbers/inc-at-pt)
+      (define-key evil-normal-state-map "-" 'evil-numbers/dec-at-pt)))
 #+END_SRC
 
 ** Minimal UI
 
-  First, lets simplify the look and feel of emacs. We do not need neither the
-  scroll bar, nor the tool bar, nor the menu bar. Also, we can safely disable
-  the startup screen.
+First, lets simplify the look and feel of emacs. We do not need neither the
+scroll bar, nor the tool bar, nor the menu bar. Also, we can safely disable the
+startup screen.
 
 #+BEGIN_SRC emacs-lisp
 (scroll-bar-mode -1)
@@ -306,15 +316,15 @@ package.
 (setq inhibit-startup-screen t)
 #+END_SRC
 
-  In a similar manner, we do not need the cursor to blink. Lets keep the UI as
-  simple as possible.
+In a similar manner, we do not need the cursor to blink. Lets keep the UI as
+simple as possible.
 
 #+BEGIN_SRC emacs-lisp
 (blink-cursor-mode (- (*) (*) (*)))
 #+END_SRC
 
-  We can also change the way the scrolling works to get a behaviour a bit more
-  smooth.
+We can also change the way the scrolling works to get a behaviour a bit more
+smooth.
 
 #+BEGIN_SRC emacs-lisp
   (setq scroll-margin 5
@@ -328,12 +338,24 @@ package.
 #+BEGIN_SRC emacs-lisp
 (use-package fill-column-indicator
   :ensure t
-  :diminish ""
-  )
+  :diminish "")
 #+END_SRC
 
-  The only fancy thing I want is to highlight the line on which my cursor is.
-  It can be very useful when I am lost.
+I like to have vertical indicator of the indentation level, and the
+~highlight-indent-guides~ appeared to be exactly what I was locking for.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package highlight-indent-guides
+    :ensure t
+    :diminish ""
+    :config
+    (progn
+      (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
+      (setq highlight-indent-guides-method 'character)))
+#+END_SRC
+
+The only fancy thing I want is to highlight the line on which my cursor is.  It
+can be very useful when I am lost.
 
 #+BEGIN_SRC emacs-lisp
   (global-hl-line-mode t)
@@ -341,15 +363,14 @@ package.
 
 ** Line Numbers
 
-Emacs comes with a package for that: linum. That is why I use [[https://github.com/emacsmirror/nlinum][nlinum]].
-
-Jokes aside, I use ~nlinum~ because it solves some performance issues I had with
-highlighting in a smart way the white spaces.
+Since its version 26, Emacs comes with a nice (and built-in)
+~global-display-line-numbers-mode~ that I use in place of ~linum~ or
+~nlinum~.
 
 #+BEGIN_SRC emacs-lisp
-(global-display-line-numbers-mode t)
-(setq-default display-line-numbers-width 4)
-(setq column-number-mode t)
+  (global-display-line-numbers-mode t)
+  (setq display-line-numbers-width-start t)
+  (setq column-number-mode t)
 #+END_SRC
 
 ** Matching Parentheses
@@ -364,17 +385,15 @@ mismatching ones too).
     (progn
       (show-paren-mode t)
       (setq blink-matching-paren -1)
-      (setq blink-matching-delay 0)
-      )
-  )
+      (setq blink-matching-delay 0)))
 #+END_SRC
 
 ** File Management
 
-  Rather than the built-in one, I use ~helm~ as my completion
-  system. Especially, I really like the fuzzy match feature, even if sometimes
-  it is annoying to hit ~space~ to specify two characters don't have to be
-  neighbors.
+Rather than the built-in one, I use ~helm~ as my completion
+system. Especially, I really like the fuzzy match feature, even if sometimes
+it is annoying to hit ~space~ to specify two characters don't have to be
+neighbors.
 
 #+BEGIN_SRC emacs-lisp
   (use-package helm
@@ -385,9 +404,7 @@ mismatching ones too).
       (helm-mode 1)
       (setq helm-mode-fuzzy-match t)
       (define-key helm-map (kbd "C-j") 'helm-next-line)
-      (define-key helm-map (kbd "C-d") 'helm-previous-line)
-      )
-    )
+      (define-key helm-map (kbd "C-d") 'helm-previous-line)))
 #+END_SRC
 
   We also rely on ~projectile~ to have some kind of “project management” in
@@ -403,16 +420,16 @@ mismatching ones too).
       (projectile-mode)
 #+END_SRC
 
-  There is something I liked in vim and missed even more in emacs, it is the way
-  the current directory is set. Basically, in vim, the current directory is the
-  directory wherein vim has been started. In emacs, by default, it is the
-  directory of the file of the current buffer! So it is quite different. Because
-  I always start vim at the root of my projects, I can find something similar by
-  using some feature of ~projectile~ so I can set the current directory to be
-  the root directory of the project. Pretty useful!
+There is something I liked in vim and missed even more in emacs, it is the way
+the current directory is set. Basically, in vim, the current directory is the
+directory wherein vim has been started. In emacs, by default, it is the
+directory of the file of the current buffer! So it is quite different. Because
+I always start vim at the root of my projects, I can find something similar by
+using some feature of ~projectile~ so I can set the current directory to be
+the root directory of the project. Pretty useful!
 
-  And because I like binding, I now can search and open a file by hitting ~T— in
-  normal mode.
+And because I like binding, I now can search and open a file by hitting ~T— in
+normal mode.
 
 #+BEGIN_SRC emacs-lisp
       (defun unified-find-file (&optional args)
@@ -420,9 +437,7 @@ mismatching ones too).
         (interactive)
         (if (projectile-project-p)
             (projectile-find-file args)
-          (helm-find-files args)
-          )
-        )
+          (helm-find-files args)))
 
       (define-key evil-normal-state-map "T" 'unified-find-file)
 
@@ -431,43 +446,35 @@ mismatching ones too).
                   (if (and (projectile-project-p)
                            (projectile-project-root)
                            )
-                      (setq default-directory (projectile-project-root))
-                    )
-                  )
-                )
-         )
-      )
+                      (setq default-directory (projectile-project-root)))))))
 #+END_SRC
 
 ** Git integration
 
-  I never took the time to learn ~magit~, so my emacs/git integration is pretty
-  simple.
+I have never taken the time to learn ~magit~, so my emacs/git integration is
+pretty simple.
 
 #+BEGIN_SRC emacs-lisp
-(use-package magit
-  :ensure t
-  )
+  (use-package magit
+    :ensure t)
 #+END_SRC
 
-  First, I rely on ~diff-hl~ to add in the fringe a diff indicator (is it a
-  change? an addition? a deletion?). It is not always accurate, but it can be
-  pretty convenient if like me you like to know what you did since your last
-  commit in a glance.
+First, I rely on ~diff-hl~ to add in the fringe a diff indicator (is it a
+change? an addition? a deletion?). It is not always accurate, but it can be
+pretty convenient if like me you like to know what you did since your last
+commit in a glance.
 
 #+BEGIN_SRC emacs-lisp
-(use-package diff-hl
-  :ensure t
-  :config
-  (progn
-    (global-diff-hl-mode +1)
-    (diff-hl-flydiff-mode +1)
-    )
-  )
+  (use-package diff-hl
+    :ensure t
+    :config
+    (progn
+      (global-diff-hl-mode +1)
+      (diff-hl-flydiff-mode +1)))
 #+END_SRC
 
-  Also, the ~git-commit~ package is a minor mode for when you write a commit
-  message with emacs.
+Also, the ~git-commit~ package is a minor mode for when you write a commit
+message with emacs.
 
 #+BEGIN_SRC emacs-lisp
 (use-package git-commit
@@ -476,11 +483,7 @@ mismatching ones too).
   (progn
     (add-hook 'git-commit-mode-hook
               (lambda ()
-                (set-fill-column 70)
-                )
-              )
-    )
-  )
+                (set-fill-column 70)))))
 #+END_SRC
 
 ** Parentheses Auto Pairing
@@ -494,66 +497,62 @@ my point of view, it is the best of both worlds.
 #+BEGIN_SRC emacs-lisp
   (add-hook 'prog-mode-hook
             (progn
-              (electric-pair-mode t)
-              )
-            )
+              (electric-pair-mode t)))
 #+END_SRC
 
 ** White Spaces
 
-  For now, I stick to 2-spaces over tabs when I can. But there are some folks
-  out there who do not think the way I do and I want to be able to work with
-  them. The [[https://github.com/jscheid/dtrt-indent][dtrt-indent]] package provides a way for emacs to guess which
-  indentation rules to follow based on the current file.
+For now, I stick to 2-spaces over tabs when I can. But there are some folks out
+there who do not think the way I do and I want to be able to work with them. The
+[[https://github.com/jscheid/dtrt-indent][dtrt-indent]] package provides a way for emacs to guess which indentation rules to
+follow based on the current file.
 
 #+BEGIN_SRC emacs-lisp
-(setq-default indent-tabs-mode nil)
+  (setq-default indent-tabs-mode nil)
 
-(use-package dtrt-indent
-  :ensure t
-  :diminish ""
-  :config
-  (progn
-    (add-hook 'prog-mode-hook (lambda ()  (dtrt-indent-mode 1)))
-    )
-  )
+  (use-package dtrt-indent
+    :ensure t
+    :diminish ""
+    :config
+    (progn
+      (add-hook 'prog-mode-hook (lambda ()  (dtrt-indent-mode 1)))))
 #+END_SRC
 
-  Following leading white spaces, we can deal quite easily with trailing ones. I
-  never found myself in a situation where I /wanted/ tailing white spaces. I
-  know markdown relies on them to insert newlines within a paragraph, but I find
-  this feature quite useless to say the least. So, I can safely delete them.
+Following leading white spaces, we can deal quite easily with trailing ones. I
+never found myself in a situation where I /wanted/ tailing white spaces. I know
+markdown relies on them to insert newlines within a paragraph, but I find this
+feature quite useless to say the least. So, I can safely delete them.
 
 #+BEGIN_SRC emacs-lisp
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
+  (add-hook 'before-save-hook 'delete-trailing-whitespace)
 #+END_SRC
 
-  Now comes the funny part. It is probably one of the part on which I have
-  worked the most. Basically, I wanted emacs to display spaces, tabs and
-  newlines with dedicated symbols. I also wanted it to be discrete and I mostly
-  succeeded for that last one.
+Now comes the funny part. It is probably one of the part on which I have
+worked the most. Basically, I wanted emacs to display spaces, tabs and
+newlines with dedicated symbols. I also wanted it to be discrete and I mostly
+succeeded for that last one.
 
-  Just for the record, you can do that pretty easily with vim:
+Just for the record, you can do that pretty easily with vim:
 
 #+BEGIN_SRC viml
 set list
 set listchars=eol:¬,tab:>,space:·
 #+END_SRC
 
-  Using the ~whitespace-mode~, we can basically do the same thing, but with some
-  restrictions. First, do not change the background of any face, because it does
-  not work very well with ~whitespace-*~ faces (basically, there is a good
-  chance the default background will be applied to spaces…). Second, we cannot
-  use ~global-whitespace-mode~, because once again it does not play very well
-  with space styling. There is a hack in this configuration file to disable
-  ~whitespace-mode~ when the ~company~ tool tip appears (and enable it again
-  when it disappears). It is similar to another hack to disable/enable
-  ~fci-mode~. Might as well say the way company handles the completion tool tip
-  is broken.
+Using the ~whitespace-mode~, we can basically do the same thing, but with some
+restrictions. First, do not change the background of any face, because it does
+not work very well with ~whitespace-*~ faces (basically, there is a good
+chance the default background will be applied to spaces…). Second, we cannot
+use ~global-whitespace-mode~, because once again it does not play very well
+with space styling. There is a hack in this configuration file to disable
+~whitespace-mode~ when the ~company~ tool tip appears (and enable it again
+when it disappears). It is similar to another hack to disable/enable
+~fci-mode~. Might as well say the way company handles the completion tool tip
+is broken.
 
-  Anyway, we configure ~whitespace-mode~ here, then enable it when we need it
-  (for ~prog-mode~ and ~text-mode~, and also ~coq-mode~ because it looks like
-  the latter does not use ~prog-mode~).
+Anyway, we configure ~whitespace-mode~ here, then enable it when we need it
+(for ~prog-mode~ and ~text-mode~, and also ~coq-mode~ because it looks like
+the latter does not use ~prog-mode~).
 
 #+BEGIN_SRC emacs-lisp
   (use-package whitespace
@@ -562,39 +561,33 @@ set listchars=eol:¬,tab:>,space:·
     :config
     (progn
       (setq whitespace-display-mappings
-            '((tab-mark 9 [9655 9] [92 9])
+            '((tab-mark 9 [?» 9] [92 9])
               (newline-mark 10 [182 10])
               (space-mark 32 [?·] [46])
-              (space-mark ?\xA0 [?~] [46])
-              )
-            )
-      (setq whitespace-style '(face spaces tabs newline tab-mark newline-mark space-mark))
-      )
-    )
+              (space-mark ?\xA0 [?~] [46])))
+      (setq whitespace-style '(face spaces tabs newline tab-mark newline-mark space-mark))))
 #+END_SRC
 
 ** Core Modes
 
-  I've chosen to use ~company~ as my completion engine.
+I've chosen to use ~company~ as my completion engine.
 
 #+BEGIN_SRC emacs-lisp
-(use-package company
-  :ensure t
-  :config
-  (progn
-    (add-hook 'company-mode-hook
-              (lambda ()
-                (setq company-idle-delay 0)
-                (define-key evil-insert-state-map (kbd "<tab>") 'company-indent-or-complete-common)
-                (define-key company-active-map (kbd "C-j") 'company-select-next)
-                (define-key company-active-map (kbd "C-d") 'company-select-previous)
-                )
-              )
+  (use-package company
+    :ensure t
+    :config
+    (progn
+      (add-hook 'company-mode-hook
+                (lambda ()
+                  (setq company-idle-delay 0)
+                  (define-key evil-insert-state-map (kbd "<tab>") 'company-indent-or-complete-common)
+                  (define-key company-active-map (kbd "C-j") 'company-select-next)
+                  (define-key company-active-map (kbd "C-d") 'company-select-previous)))
 #+END_SRC
 
-  Out of the box, ~company~ does not work well with the ~fill-column-indicator~
-  package. Therefore, I had to find a [[https://github.com/company-mode/company-mode/issues/180#issuecomment-55047120][workaround]] (yet another one, I would
-  add). Basically, it makes ~company~ disables the fci when it needs to.
+Out of the box, ~company~ does not work well with the ~fill-column-indicator~
+package. Therefore, I had to find a [[https://github.com/company-mode/company-mode/issues/180#issuecomment-55047120][workaround]] (yet another one, I would
+add). Basically, it makes ~company~ disables the fci when it needs to.
 
 #+BEGIN_SRC emacs-lisp
     (defvar-local company-fci-mode-on-p nil)
@@ -627,12 +620,10 @@ set listchars=eol:¬,tab:>,space:·
             (whitespace-mode 1)
             (setq my-prev-whitespace-mode nil))))
     (advice-add 'company-pseudo-tooltip-unhide :before #'pre-popup-draw)
-    (advice-add 'company-pseudo-tooltip-hide :after #'post-popup-draw)
-    )
-  )
+    (advice-add 'company-pseudo-tooltip-hide :after #'post-popup-draw)))
 #+END_SRC
 
-  In addition, I use ~flycheck~.
+In addition, I use ~flycheck~.
 
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck
@@ -678,12 +669,11 @@ set listchars=eol:¬,tab:>,space:·
       :overlay-category 'flycheck-info-overlay
       :fringe-bitmap 'flycheck-fringe-bitmap-ball
       :fringe-face 'flycheck-fringe-info
-      :info-list-face 'flycheck-info-list-info)
-  )
+      :info-list-face 'flycheck-info-list-info))
 #+END_SRC
 
-  A lot of major modes I use derived from ~prog-mode~, so I use ~prog-mode-hook~
-  to avoid code duplication.
+A lot of major modes I use derived from ~prog-mode~, so I use ~prog-mode-hook~
+to avoid code duplication.
 
 #+BEGIN_SRC emacs-lisp
   (add-hook 'prog-mode-hook
@@ -694,13 +684,10 @@ set listchars=eol:¬,tab:>,space:·
       (company-mode)
       (flycheck-mode)
       (unless (bound-and-true-p whitespace-mode)
-        (whitespace-mode)
-        )
-      )
-    )
+        (whitespace-mode))))
 #+END_SRC
 
-  In a similar manner, I use ~text-mode-hook~.
+In a similar manner, I use ~text-mode-hook~.
 
 #+BEGIN_SRC emacs-lisp
   (add-hook 'text-mode-hook
@@ -710,18 +697,15 @@ set listchars=eol:¬,tab:>,space:·
               (turn-on-auto-fill)
               (set-fill-column 80)
               (unless (bound-and-true-p whitespace-mode)
-                (whitespace-mode)
-                )
-              )
-            )
+                (whitespace-mode))))
 #+END_SRC
 
 * Programming Languages
 
 ** C
 
-  Irony is a pretty solid tool to work with C project. It needs additional
-  packages to work with ~company~ and ~flycheck~.
+Irony is a pretty solid tool to work with C project. It needs additional
+packages to work with ~company~ and ~flycheck~.
 
 #+BEGIN_SRC emacs-lisp
   (use-package irony
@@ -738,37 +722,67 @@ set listchars=eol:¬,tab:>,space:·
                     'irony-completion-at-point-async)
                   (irony-cdb-autosetup-compile-options)
 
-                  (flycheck-irony-setup)
-                  )
-                )
+                  (flycheck-irony-setup)))
       (add-hook 'c-mode-hook
                 (lambda ()
-                  (irony-mode)
-                  )
-                )
-      )
-    )
+                  (irony-mode)))))
 
   (use-package company-irony
-    :ensure t
-    )
+    :ensure t)
 
   (use-package flycheck-irony
+    :ensure t)
+#+END_SRC
+
+** Common Lisp
+
+I kinda like Common Lisp, and the ~slime~ mode for Emacs is awesome. The
+following code snippet assumes ~quicklisp~ (sort of package manager for CL) has
+been installed.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package slime
     :ensure t
-    )
+    :config
+    (progn
+      (setq inferior-lisp-program "/usr/bin/sbcl")
+      (slime-setup '(slime-fancy))
+      (if (file-exists-p "~/quicklisp/slime-helper.el")
+          (load (expand-file-name "~/quicklisp/slime-helper.el")))))
 #+END_SRC
 
 ** Coq
 
-  We load proof general and we are ready to go.
+Until recently, I was using the archlinux package to get coq, but I had poor
+experiences with the coq-equations package. To fix that, I switch to an
+opam-based setup. It works well, and in particular I do not need to be root
+anymore to install packages. Unfortunately, this does not work out of the box
+with emacs + systemd.
+
+We load proof general and we are ready to go.
 
 #+BEGIN_SRC emacs-lisp
-(load (concat (getenv "HOME") "/.emacs.d/PG-4.4/generic/proof-site"))
+  (use-package proof-general
+    :ensure t
+    :init
+    (custom-set-variables
+     '(proof-splash-enable nil)
+     '(coq-compile-before-require t)
+     '(proof-disappearing-proofs t)
+     '(coq-prog-name (concat (getenv "HOME")
+                             "/.opam/system/bin/coqtop"))
+     '(coq-compiler (concat (getenv "HOME")
+                            "/.opam/system/bin/coqc"))
+     '(coq-dependency-analyzer (concat (getenv "HOME")
+                                       "/.opam/system/bin/coqdep")))
+    :config
+    (progn
+      (add-hook 'coq-mode-hook 'highlight-indent-guides-mode)))
 #+END_SRC
 
-  I also use ~company-coq~, but I disable prettification of operators, types
-  etc. And, of course! The ~coq-mode~ is not using ~prog-mode~. Unfortunately,
-  ~flycheck~ supports coq but does not look into the ~_CoqProject~ file.
+I also use ~company-coq~, but I disable prettification of operators, types
+etc. And, of course! The ~coq-mode~ is not using ~prog-mode~. Unfortunately,
+~flycheck~ supports coq but does not look into the ~_CoqProject~ file.
 
 #+BEGIN_SRC emacs-lisp
   (use-package company-coq
@@ -784,23 +798,18 @@ set listchars=eol:¬,tab:>,space:·
         (company-coq-features/prettify-symbols 0)
         (setq coq-one-command-per-line nil)
         (unless (bound-and-true-p whitespace-mode)
-          (whitespace-mode)
-          )
-        )
-    )
-  )
+          (whitespace-mode)))))
 #+END_SRC
 
-  And that should be all for now.
+And that should be all for now.
 
 ** Elixir
 
-  The Elixir typical package is called ~alchemist~.
+The Elixir typical package is called ~alchemist~.
 
 #+BEGIN_SRC emacs-lisp
-(use-package alchemist
-  :ensure t
-  )
+  (use-package alchemist
+    :ensure t)
 #+END_SRC
 
 ** Emacs Lisp
@@ -814,26 +823,24 @@ why not complying?
     :ensure t
     :config
     (eval-after-load 'flycheck
-      '(flycheck-package-setup))
-    )
+      '(flycheck-package-setup)))
 #+END_SRC
 
 ** Haskell
 
-  Cool kids use ~intero~ now. For this to work as expected, you will need:
+Cool kids use ~intero~ now. For this to work as expected, you will need:
 
-  - ~hlint~
-  - ~apply-refact~
-  - ~stylish-haskell~
+- ~hlint~
+- ~apply-refact~
+- ~stylish-haskell~
 
-  You can install them easily using ~stack install~, but this means your ~PATH~
-  environment variable needs to contains the ~\~/.local/bin~ directory.
+You can install them easily using ~stack install~, but this means your ~PATH~
+environment variable needs to contains the ~\~/.local/bin~ directory.
 
 #+BEGIN_SRC emacs-lisp
   (use-package hlint-refactor
     :ensure t
-    :diminish ""
-    )
+    :diminish "")
 
   (use-package intero
     :after hlint-refactor
@@ -848,47 +855,37 @@ why not complying?
                                            '(warning . haskell-hlint))
                 (define-key evil-normal-state-map (kbd "]") 'intero-goto-definition)
                 (define-key evil-normal-state-map (kbd "[") 'xref-pop-marker-stack)
-                (setq-default haskell-stylish-on-save t)
-                )
-              )
-    )
+                (setq-default haskell-stylish-on-save t))))
 #+END_SRC
 
 ** LaTeX
 
 #+BEGIN_SRC emacs-lisp
-(setq font-lock-maximum-decoration nil)
+  (setq font-lock-maximum-decoration nil)
 #+END_SRC
 
 ** Markdown
 
-  There is not much to do for this one.
-
 #+BEGIN_SRC emacs-lisp
-(use-package markdown-mode
-  :ensure t
-  :config
-  (progn
-    (add-hook 'markdown-mode-hook
-              (lambda ()
-                (autoload 'markdown-mode "markdown-mode"
-                  "Major mode for editing Markdown files" t)
-                (add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
-                (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
-                )
-              )
-    )
-  )
+  (use-package markdown-mode
+    :ensure t
+    :config
+    (progn
+      (add-hook 'markdown-mode-hook
+                (lambda ()
+                  (autoload 'markdown-mode "markdown-mode"
+                    "Major mode for editing Markdown files" t)
+                  (add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
+                  (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))))))
 #+END_SRC
 
 ** Ocaml
 
-  The Ocaml typical package is called ~tuareg~.
+The Ocaml typical package is called ~tuareg~.
 
 #+BEGIN_SRC emacs-lisp
 (use-package tuareg
-  :ensure t
-  )
+  :ensure t)
 #+END_SRC
 
 ** Ogmarkup
@@ -898,25 +895,29 @@ intended to be used by storytellers to write their stories. I first define a
 major mode for ogmarkup.
 
 #+BEGIN_SRC emacs-lisp
-(defvar ogmarkup-mode-hook nil)
+  (use-package writeroom-mode
+    :ensure t)
+  (defvar ogmarkup-mode-hook nil)
 
-(defun ogmarkup-mode ()
-  "Major mode for editing ogmarkup document"
-  (interactive)
-  (kill-all-local-variables)
-  (setq major-mode 'ogmarkup)
-  (setq mode-name "ogmarkup")
+  (defun ogmarkup-mode ()
+    "Major mode for editing ogmarkup document"
+    (interactive)
+    (kill-all-local-variables)
+    (setq major-mode 'ogmarkup)
+    (setq mode-name "ogmarkup")
 
-  (set-frame-font "Noto Serif")
-  (visual-line-mode)
-  (set-fill-column 80)
-  (visual-fill-column-mode)
-  (nlinum-mode nil)
+    (visual-line-mode)
 
-  (run-hooks 'ogmarkup-mode-hook)
-  )
+    (text-scale-set 4)
+    (writeroom-mode)
+    (writeroom-adjust-width -100)
+    ;(load-theme 'monotropic)
+    (set-default-font "ETBookOT")
+    (global-display-line-numbers-mode nil)
 
-(add-to-list 'auto-mode-alist '("\\.up\\'" . ogmarkup-mode))
+    (run-hooks 'ogmarkup-mode-hook))
+
+  (add-to-list 'auto-mode-alist '("\\.om\\'" . ogmarkup-mode))
 #+END_SRC
 
 ** Org-mode
@@ -937,18 +938,13 @@ the internet]].
                     (advice-add 'fci-mode :override #'fci-mode-override-advice)
                     (let ((result  (apply fun args)))
                       (advice-remove 'fci-mode #'fci-mode-override-advice)
-                      result)))
-      )
-    )
+                      result)))))
 #+END_SRC
-
 
 #+BEGIN_SRC emacs-lisp
   (add-hook 'org-mode-hook
             (lambda ()
-              (setq org-log-done 'time)
-              )
-            )
+              (setq org-log-done 'time)))
 #+END_SRC
 
 ** PureScript
@@ -967,101 +963,85 @@ Javascript.
                   (setq psc-ide-use-npm-bin t)
                   (company-mode)
                   (flycheck-mode)
-                  (turn-on-purescript-indentation)
-                  )
-                )
-      )
-    )
+                  (turn-on-purescript-indentation)))))
 #+END_SRC
 
 ** Rust
 
-  Cool kids use Rust too. Unfortunately, not all programming languages have
-  there own ~intero~ and here the setup is a bit more complicated than Haskell
-  or C, because we rely on more packages.
+Cool kids use Rust too. Unfortunately, not all programming languages have
+there own ~intero~ and here the setup is a bit more complicated than Haskell
+or C, because we rely on more packages.
 
-  The major mode is ~rust-mode~:
+The major mode is ~rust-mode~:
 
 #+BEGIN_SRC emacs-lisp
 (use-package rust-mode
-  :ensure t
-  )
+  :ensure t)
 #+END_SRC
 
-  Then we need ~cargo~ to get an integration with the rust packages manager.
+Then we need ~cargo~ to get an integration with the rust packages manager.
 
 #+BEGIN_SRC emacs-lisp
 (use-package cargo
   :ensure t
   :config
-  (add-hook 'rust-mode-hook 'cargo-minor-mode)
-  )
+  (add-hook 'rust-mode-hook 'cargo-minor-mode))
 #+END_SRC
 
-  Racer is the completion engine of rust, lets configure that. The trick here is
-  I have found a way to use ~rustup~ to decide which toolchain to use.
+Racer is the completion engine of rust, lets configure that. The trick here is
+I have found a way to use ~rustup~ to decide which toolchain to use.
 
 #+BEGIN_SRC emacs-lisp
-(use-package racer
-  :ensure t
-  :config
-  (progn
-    (defvar rustup-default
-      (replace-regexp-in-string "/bin/rustc\n*\\'"
-                                ""
-                                (shell-command-to-string "rustup which rustc"))
-      "The rust toolchain currently installed according to rustup")
+  (use-package racer
+    :ensure t
+    :config
+    (progn
+      (defvar rustup-default
+        (replace-regexp-in-string "/bin/rustc\n*\\'"
+                                  ""
+                                  (shell-command-to-string "rustup which rustc"))
+        "The rust toolchain currently installed according to rustup")
 
-    (setq racer-cmd (executable-find "racer"))
-    (setq racer-rust-src-path
-          (concat rustup-default "/lib/rustlib/src/rust/src"))
-    (add-hook 'rust-mode-hook 'racer-mode)
-    (add-hook 'racer-mode-hook 'company-mode)
-    (add-hook 'racer-mode-hook 'turn-on-eldoc-mode)
-    )
-)
+      (setq racer-cmd (executable-find "racer"))
+      (setq racer-rust-src-path
+            (concat rustup-default "/lib/rustlib/src/rust/src"))
+      (add-hook 'rust-mode-hook 'racer-mode)
+      (add-hook 'racer-mode-hook 'company-mode)
+      (add-hook 'racer-mode-hook 'turn-on-eldoc-mode)))
 #+END_SRC
 
-  The package ~company-racer~ builds the bruige between ~racer~ and ~company~.
+The package ~company-racer~ builds the bruige between ~racer~ and ~company~.
 
 #+BEGIN_SRC emacs-lisp
-(use-package company-racer
-  :ensure t
-  :config
-  (progn
-    (add-to-list 'company-backends 'company-racer)
-    )
-  )
+  (use-package company-racer
+    :ensure t
+    :config
+    (add-to-list 'company-backends 'company-racer))
 #+END_SRC
 
-  And finally, ~flycheck-rust~!
+And finally, ~flycheck-rust~!
 
 #+BEGIN_SRC emacs-lisp
-(use-package flycheck-rust
-  :ensure t
-  :config
-  (progn
-    (add-hook 'flycheck-mode-hook #'flycheck-rust-setup)
-    )
-  )
+  (use-package flycheck-rust
+    :ensure t
+    :config
+    (add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
 #+END_SRC
 
 ** SASS
 
-   We use the ~ssass-mode~ to edit sass files.
+We use the ~ssass-mode~ to edit sass files.
 
 #+BEGIN_SRC emacs-lisp
-(use-package ssass-mode
-  :ensure t
-  )
+  (use-package ssass-mode
+    :ensure t)
 #+END_SRC
 
 ** Yaml
 
 #+BEGIN_SRC emacs-lisp
-(use-package yaml-mode
-  :ensure t
-  )
+  (use-package yaml-mode
+    :ensure t)
 #+END_SRC
 
 * Miscellaneous
@@ -1075,29 +1055,31 @@ but not everything ends up there (and I like submitting links from time to
 time).
 
 #+BEGIN_SRC emacs-lisp
-(use-package elfeed
-  :ensure t
-  :config
-  (progn
+  (use-package elfeed
+    :ensure t
+    :config
     (setq elfeed-feeds
-      '(("http://osa1.net/rss.xml" dev)
-        ("http://bloglaurel.com/rss/fr" webcomic)
-        ("https://www.cis.upenn.edu/~aarthur/poleiro/atom.xml" dev)
-        ("http://www.haskellforall.com/feeds/posts/default" dev haskell)
-        )
-      )
-    (global-set-key (kbd "C-x w") 'elfeed)
-  )
-)
+          '(("http://osa1.net/rss.xml" dev)
+            ("http://bloglaurel.com/rss/fr" webcomic)
+            ("https://www.cis.upenn.edu/~aarthur/poleiro/atom.xml" dev)
+            ("http://www.haskellforall.com/feeds/posts/default" dev haskell))))
 #+END_SRC
 
 ** Temporary Files
 
 #+BEGIN_SRC emacs-lisp
-(setq backup-directory-alist
-      `((".*" . ,temporary-file-directory)))
-(setq auto-save-file-name-transforms
-          `((".*" ,temporary-file-directory t)))
+  (setq backup-directory-alist `((".*" . ,temporary-file-directory)))
+  (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
 #+END_SRC
 
-   And that is pretty much all!
+And that is pretty much all!
+
+** Email
+
+#+BEGIN_SRC emacs-lisp
+  (setq auto-mode-alist (append '(("^\/tmp\/neomutt" . mail-mode)) auto-mode-alist))
+  (add-hook 'mail-mode-hook
+    (lambda ()
+      (fci-mode)
+      (set-fill-column 72)))
+#+END_SRC
