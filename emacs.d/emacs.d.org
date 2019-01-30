@@ -1030,11 +1030,22 @@ And finally, ~flycheck-rust~!
 
 ** SASS
 
-We use the ~ssass-mode~ to edit sass files.
+~rainbow-mode~ sets background color to string that match color.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package ssass-mode
+  (use-package rainbow-mode
     :ensure t)
+#+END_SRC
+
+We use the ~sass-mode~ to edit sass files, and we activate ~rainbow-mode~ in
+this context.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package sass-mode
+    :ensure t
+    :config
+    (add-hook 'sass-mode-hook
+              (lambda () (rainbow-mode))))
 #+END_SRC
 
 ** Yaml
